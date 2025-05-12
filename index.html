@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maverick AI</title>
+ <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div id="logo2">MAVERICK</div>
+    <button id="login">Login</button>
+  </header>
+
+  <div id="chat-container"></div>
+
+  <form id="input-form">
+    <input type="text" id="textbox1" placeholder="Ask Maverick anything..." required />
+    <button type="submit" id="sendBtn">Send</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('input-form');
+    const input = document.getElementById('textbox1');
+    const chatContainer = document.getElementById('chat-container');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const userInput = input.value.trim();
+      if (!userInput) return;
+
+      addMessage(userInput, 'user');
+      input.value = '';
+      addMessage('Thinking...', 'bot');
+
+      try {
+        const response = await fetch('http://localhost:5000/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'qwen3:1.7b',
+            prompt: userInput,
+            stream: false
+          })
+        });
+
+        const data = await response.json();
+        updateLastBotMessage(data.response || 'No response.');
+      } catch (error) {
+        console.error(error);
+        updateLastBotMessage("⚠️ Error contacting Maverick.");
+      }
+    });
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.classList.add('message', sender);
+      div.textContent = text;
+      chatContainer.appendChild(div);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function updateLastBotMessage(text) {
+      const messages = document.querySelectorAll('.bot');
+      const lastBot = messages[messages.length - 1];
+      if (lastBot) lastBot.textContent = text;
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  </script>
+</body>
+</html>
